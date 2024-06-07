@@ -10,7 +10,7 @@ function truncated_svd(tmat::AbstractMatrix, dmax::Int, atol::Real)
     return u[:, 1:dmax], s[1:dmax], v'[1:dmax, :], sum(s[dmax+1:end])
 end
 
-function sperate_singleT_tripartite(site::NMPS,dmax::Int, atol::Real)
+function sperate_singleT_tripartite(site::NMPS, dmax::Int, atol::Real)
     nSTT = site.tensors[1]
     re_nSTT = reshape(nSTT, size(nSTT, 1)*size(nSTT, 2)*size(nSTT, 3), :)
     u1, s1, v1 = truncated_svd(re_nSTT, dmax, atol)
@@ -27,6 +27,11 @@ function sperate_singleT_tripartite(site::NMPS,dmax::Int, atol::Real)
     return A, B, C
 end
 
+function MM_line(mpsline::NMPS)
+
+    
+end
+
 phix = 7
 
 a = 4
@@ -37,7 +42,9 @@ c = 6
 
 nSTT = rand(ComplexF64, phix, a, i1, i2, b, c)
 
-A, B, C = sperate_singleT_tripartite(NMPS([nSTT]),min(phix, a, b, c), 0)
+A, B, C = sperate_singleT_tripartite(NMPS([nSTT]),max(100, phix, a, b, c), 0)
+
+pp = ein"ijkoq, qlmp, pno->ijklmn"(A,B,C)
 
 @show pp
 @show nSTT
