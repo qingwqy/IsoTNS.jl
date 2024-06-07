@@ -1,7 +1,18 @@
-using OMEinsum, Test, LinearAlgebra, Yao
+using OMEinsum, LinearAlgebra
 
 struct NMPS{T}
     tensors::Vector{Array{T, 6}}
+end
+struct MMPS{T}
+    tensors::Vector{Array{T, 5}}
+end
+
+struct FMPS{T}
+    tensors::Vector{Array{T, 4}}
+end
+
+struct OMPS{T}
+    tensors::Vector{Array{T, 3}}
 end
 
 function truncated_svd(tmat::AbstractMatrix, dmax::Int, atol::Real)
@@ -14,9 +25,9 @@ function sperate_singleT_tripartite(site::NMPS, dmax::Int, atol::Real)
     nSTT = site.tensors[1]
     re_nSTT = reshape(nSTT, size(nSTT, 1)*size(nSTT, 2)*size(nSTT, 3), :)
     u1, s1, v1 = truncated_svd(re_nSTT, dmax, atol)
-    A = reshape(u1, size(nSTT, 1), size(nSTT, 2), size(nSTT, 3), size(nSTT, 2), :)
+    A = reshape(u1, size(nSTT, 1), size(nSTT, 2), size(nSTT, 3), :, size(nSTT, 6))
 
-    nSTT_B_2 = reshape(Diagonal(s1) * v1,  size(nSTT, 2), :, size(nSTT, 4), size(nSTT, 5), size(nSTT, 6))
+    nSTT_B_2 = reshape(Diagonal(s1) * v1,  size(nSTT, 6), :, size(nSTT, 4), size(nSTT, 5), size(nSTT, 6))
     nSTT_B_2 = permutedims(nSTT_B_2, (2, 3, 4, 5, 1))
     re_nSTT_B_2 = reshape(nSTT_B_2, size(nSTT_B_2, 1)*size(nSTT_B_2, 2)*size(nSTT_B_2, 3), :)
     u2, s2, v2 = truncated_svd(re_nSTT_B_2, dmax, atol)
@@ -27,26 +38,53 @@ function sperate_singleT_tripartite(site::NMPS, dmax::Int, atol::Real)
     return A, B, C
 end
 
-function MM_line(mpsline::NMPS)
 
-    
+
+function MM_line!(mpsline_O::MMPS, dmax::Int, atol::Real)
+    l = length(mpsline_O.tensors)
+    mpsline_G = FMPS([rand(ComplexF64, 1, 1, 1, 1) for i in 1:l])
+
+    Imps = OMPS([rand(ComplexF64, 1, 1, 1)])
+    Anx = ein"ijsmn, ksl->ijklmn"(mpsline_O.tensors[1], Imps.tensors[1])
+    Anx = NMPS([Anx])
+    for i in 1:l-1
+        A = Anx.tensors[1]
+        #A  = reshape(A, size(A, 1), size(A, 2), size(A, 3), 1, size(A, 4), size(A, 5))
+        A_MM, B_MM, C_MM = sperate_singleT_tripartite(NMPS([A]), dmax, atol)
+        B = mpsline_O.tensors[i+1]
+        B = ein"ijsmn, ksl->ijklmn"(B,C_MM)
+        mpsline_O.tensors[i] = A_MM
+        Anx.tensors[1] = B
+        mpsline_G.tensors[i] = B_MM
+    end
+    L = Anx.tensors[1]
+    A_MM, B_MM, C_MM = sperate_singleT_tripartite(NMPS([L]), dmax, atol)
+    mpsline_O.tensors[l] = A_MM
+    mpsline_G.tensors[l] = B_MM
+    return mpsline_O, mpsline_G
 end
 
-phix = 7
 
-a = 4
-i1 = 2
-i2 = 3
-b = 5
-c = 6
+phix = 2
+a = 2
+b = 2
+c = 2
+i = c
 
-nSTT = rand(ComplexF64, phix, a, i1, i2, b, c)
+nSTT1 = rand(ComplexF64, phix, a, 1, b, c)
+nSTT2 = rand(ComplexF64, phix, a, i, b, c)
+nSTT3 = rand(ComplexF64, phix, a, i, b, 1)
+nSTT = [nSTT1, nSTT2, nSTT3]
 
-A, B, C = sperate_singleT_tripartite(NMPS([nSTT]),max(100, phix, a, b, c), 0)
 
-pp = ein"ijkoq, qlmp, pno->ijklmn"(A,B,C)
+MM1, MM2 = MM_line!(MMPS(nSTT), 100, 0)
 
-@show pp
-@show nSTT
+@show MM1.tensors[1]
+@show MM1.tensors[2]
+@show MM1.tensors[3]
+@show MM2.tensors[1]
+@show MM2.tensors[2]
+@show MM2.tensors[3]
 
-(pp-nSTT)./nSTT
+
+pp = ein"rqnsi, rqnti ->st "(MM1.tensors[3], conj.(MM1.tensors[3]))
