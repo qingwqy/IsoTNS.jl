@@ -1,7 +1,7 @@
 using IsoTNS
 using Test
 
-@testset "IsoTNS.jl" begin
+@testset "sitemm" begin
     # Write your tests here.
-    include("Core.jl")
+    include("sitemm.jl")
 end
