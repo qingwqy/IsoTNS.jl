@@ -1,5 +1,3 @@
-using OMEinsum, Test, LinearAlgebra, Yao
-
 struct NMPS{T}
     tensors::Vector{Array{T, 6}}
 end
@@ -26,20 +24,3 @@ function sperate_singleT_tripartite(site::NMPS,dmax::Int, atol::Real)
 
     return A, B, C
 end
-
-phix = 7
-
-a = 4
-i1 = 2
-i2 = 3
-b = 5
-c = 6
-
-nSTT = rand(ComplexF64, phix, a, i1, i2, b, c)
-
-A, B, C = sperate_singleT_tripartite(NMPS([nSTT]),min(phix, a, b, c), 0)
-
-@show pp
-@show nSTT
-
-(pp-nSTT)./nSTT
