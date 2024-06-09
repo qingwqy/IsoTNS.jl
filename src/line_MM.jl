@@ -64,27 +64,3 @@ function MM_line!(mpsline_O::MMPS, dmax::Int, atol::Real)
     return mpsline_O, mpsline_G
 end
 
-
-phix = 2
-a = 2
-b = 2
-c = 2
-i = c
-
-nSTT1 = rand(ComplexF64, phix, a, 1, b, c)
-nSTT2 = rand(ComplexF64, phix, a, i, b, c)
-nSTT3 = rand(ComplexF64, phix, a, i, b, 1)
-nSTT = [nSTT1, nSTT2, nSTT3]
-
-
-MM1, MM2 = MM_line!(MMPS(nSTT), 100, 0)
-
-@show MM1.tensors[1]
-@show MM1.tensors[2]
-@show MM1.tensors[3]
-@show MM2.tensors[1]
-@show MM2.tensors[2]
-@show MM2.tensors[3]
-
-
-pp = ein"rqnsi, rqnti ->st "(MM1.tensors[3], conj.(MM1.tensors[3]))

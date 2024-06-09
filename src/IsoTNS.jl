@@ -2,9 +2,8 @@ module IsoTNS
 
 using OMEinsum 
 # Write your package code here.
-include("Core.jl")
-include("Single_2_triparite.jl")
+include("line_MM.jl")
 
-export hello_world
+export MMPS, NMPS, FMPS, OMPS, truncated_svd, sperate_singleT_tripartite, MM_line!
 
 end

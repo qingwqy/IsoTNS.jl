@@ -1,7 +1,7 @@
 using IsoTNS
 using Test
 
-@testset "IsoTNS.jl" begin
+@testset "line_MM" begin
     # Write your tests here.
-    include("Core.jl")
+    include("line_MM.jl")
 end
